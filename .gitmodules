@@ -1,0 +1,6 @@
+[submodule "libs/SSD1306_OLED_PICO"]
+	path = libs/SSD1306_OLED_PICO
+	url = https://github.com/gavinlyonsrepo/SSD1306_OLED_PICO.git
+[submodule "libs/RP2040-Button"]
+	path = libs/RP2040-Button
+	url = git@github.com:TuriSc/RP2040-Button.git
