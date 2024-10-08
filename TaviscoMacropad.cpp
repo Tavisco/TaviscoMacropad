@@ -5,7 +5,6 @@
 #include "hardware/uart.h"
 #include "TaviscoMacropad.hpp"
 #include "libs/SSD1306_OLED_PICO/include/ssd1306/SSD1306_OLED.hpp"
-#include "libs/RP2040-Button/button.h"
 #include "usb_descriptors.h"
 #include "bsp/board.h"
 #include "keyboard.h"
@@ -19,7 +18,7 @@ SSD1306 oled_screen(OLED_WIDTH, OLED_HEIGHT);
 uint8_t current_mode = 0;
 KeyBoard keyboard;
 
-void hid_task(void);
+void keys_task(void);
 
 void draw_current_mode(void) {
 	oled_screen.fillRect(0, 0, 64, 14, BLACK);
@@ -63,93 +62,76 @@ static void send_hid_report(bool keys_pressed)
 
     if (keys_pressed)
     {
-		if (keyboard.keys_pressed[0] == GPIO_ENCODER_SW) {
-			if (current_mode + 1 == mode_count) {
-				current_mode = 0;
-			} else {
-				current_mode++;
-			}
-			draw_current_mode();
-			busy_wait_ms(200);
-			return;
-		}
-		uint8_t key_codes[6] = {0};
-		key_codes[0] = HID_KEY_9;
-        tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, key_codes);
+        tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, keyboard.keys_pressed);
 		tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
         send_empty = true;
+		return;
     }
-    else
-    {
-        // send empty key report if previously has key pressed
-        if (send_empty)
-        {
-            tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
-        }
-        send_empty = false;
-    }
+
+	// send empty key report if previously has key pressed
+	if (send_empty)
+	{
+		tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
+	}
+	send_empty = false;
+
 }
 
 
-// void handleButton(button_t *button_p) {
-//   button_t *button = (button_t*)button_p;
-
-//   if(button->state) return;
-
-//   switch(button->pin){
-//     case GPIO_ENCODER_SW:
-//         printf("Changing mode\n");
-//         if (current_mode + 1 == mode_count) {
-// 			current_mode = 0;
-// 		} else {
-// 			current_mode++;
-// 		}
-// 		break;
-// 	case GPIO_KEY_9:
-// 		if (tud_suspended())
-// 		{
-// 			// Wake up host if we are in suspend mode
-// 			// and REMOTE_WAKEUP feature is enabled by host
-// 			tud_remote_wakeup();
-// 		}
-		
-// 		// send a report
-// 		send_hid_report();
-		
-// 		break;
-//   }
-
-//   draw_current_mode();
-// }
-
-// Every 10ms, we poll the pins and send a report
-void hid_task(void)
-{
-    // Poll every 10ms
-    const uint32_t interval_ms = 10;
-    static uint32_t start_ms = 0;
-
-    if (board_millis() - start_ms < interval_ms)
-    {
-        return; // not enough time
-    }
-    start_ms += interval_ms;
-
-    // Check for keys pressed
-    bool const keys_pressed = keyboard.update();
-
-    // Remote wakeup
+void handle_hid_task(bool const keys_pressed) {
     if (tud_suspended() && keys_pressed)
     {
         // Wake up host if we are in suspend mode
         // and REMOTE_WAKEUP feature is enabled by host
         tud_remote_wakeup();
+		return;
     }
-    else
+
+	switch (current_mode)
+	{
+	case MODE_KEYPAD:
+		send_hid_report(keys_pressed);
+		break;
+	
+	default:
+		break;
+	}
+}
+
+void change_current_mode(void)
+{
+	if (current_mode + 1 == mode_count) {
+		current_mode = 0;
+	} else {
+		current_mode++;
+	}
+	draw_current_mode();
+	busy_wait_ms(200);
+}
+
+// Every 10ms, we poll the pins
+void keys_task(void)
+{
+    static uint32_t start_ms = 0;
+
+    if (board_millis() - start_ms < POLL_INTERVAL)
     {
-        // send a report
-        send_hid_report(keys_pressed);
+        return; // not enough time
     }
+    start_ms += POLL_INTERVAL;
+
+    // Check for keys pressed
+    bool const keys_pressed = keyboard.update(current_mode);
+
+	// Pressing the encoder changes mode
+	if (keys_pressed && keyboard.keys_pressed[0] == GPIO_ENCODER_SW) {
+		change_current_mode();
+		return;
+	}
+
+	if (current_mode == MODE_KEYPAD){
+		handle_hid_task(keys_pressed);
+	}
 }
 
 int main()
@@ -163,7 +145,7 @@ int main()
 
 	while (true) {
 		tud_task(); // tinyusb device task
-		hid_task(); // keyboard implementation
+		keys_task();
 	}
 }
 
