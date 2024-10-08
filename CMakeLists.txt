@@ -35,7 +35,7 @@ pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(TaviscoMacropad TaviscoMacropad.cpp )
+add_executable(TaviscoMacropad TaviscoMacropad.cpp usb_descriptors.c)
 
 pico_set_program_name(TaviscoMacropad "TaviscoMacropad")
 pico_set_program_version(TaviscoMacropad "0.1")
@@ -62,6 +62,8 @@ target_link_libraries(TaviscoMacropad
         hardware_i2c
         pico_ssd1306
         button
+        tinyusb_device
+        tinyusb_board
         )
 
 pico_add_extra_outputs(TaviscoMacropad)

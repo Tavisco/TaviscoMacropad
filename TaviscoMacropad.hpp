@@ -1,13 +1,13 @@
 #pragma once
 
-// GPIOs
+// Encoder
 #define GPIO_ENCODER_A	28
 #define GPIO_ENCODER_B	27
-#define GPIO_ENCODER_SW	26
-//#define GPIO_SW			13
+
+
+// OLED
 #define GPIO_OLED_SDA	2
 #define GPIO_OLED_SCLK	3
-
 // I2C
 #define I2C_SPEED		800
 #define i2C_ADDRESS		0x3C
