@@ -8,6 +8,7 @@
 #include "usb_descriptors.h"
 #include "bsp/board.h"
 #include "keyboard.h"
+#include "rotary_encoder.h"
 
 const uint8_t mode_count = 5;
 
@@ -17,12 +18,32 @@ uint8_t screen_buffer[OLED_SIZE]; // Define a buffer to cover whole screen  128 
 SSD1306 oled_screen(OLED_WIDTH, OLED_HEIGHT);
 uint8_t current_mode = 0;
 KeyBoard keyboard;
+rotary_encoder_t encoder;
 
 void keys_task(void);
 
 void draw_current_mode(void) {
 	oled_screen.fillRect(0, 0, 64, 14, BLACK);
 	oled_screen.writeCharString(0, 3, (char *)modes[current_mode]);
+	
+	oled_screen.fillRect(0, 16, 128, 48, BLACK);
+
+	if (current_mode == MODE_KEYPAD){
+		//TODO: Move this a proper file?
+		oled_screen.setFont(pFontMega);
+		oled_screen.writeCharString(00, 16, (char *)"7");
+		oled_screen.writeCharString(18, 16, (char *)"8");
+		oled_screen.writeCharString(36, 16, (char *)"9");
+		oled_screen.writeCharString(112, 16, (char *)"0");
+		oled_screen.writeCharString(00, 31, (char *)"4");
+		oled_screen.writeCharString(18, 31, (char *)"5");
+		oled_screen.writeCharString(36, 31, (char *)"6");
+		oled_screen.writeCharString(00, 48, (char *)"1");
+		oled_screen.writeCharString(18, 48, (char *)"2");
+		oled_screen.writeCharString(36, 48, (char *)"3");
+		oled_screen.setFont(pFontDefault);
+	}
+
 	oled_screen.OLEDupdate();
 }
 
@@ -47,6 +68,23 @@ void setup_oled(void) {
 
 	draw_current_mode();
 	busy_wait_ms(100);
+}
+
+void setup_encoder(void) {
+	gpio_init(GPIO_ENCODER_A);
+    gpio_set_dir(GPIO_ENCODER_A, GPIO_IN);
+    gpio_pull_up(GPIO_ENCODER_A);
+
+    gpio_init(GPIO_ENCODER_B);
+    gpio_set_dir(GPIO_ENCODER_B, GPIO_IN);
+    gpio_pull_up(GPIO_ENCODER_B);
+
+	encoder.gpio_a = GPIO_ENCODER_A;
+    encoder.gpio_b = GPIO_ENCODER_B;
+	encoder.min_value = 1;
+    encoder.max_value = 5;
+    encoder.factor = 1;
+    encoder.current_value = 1;
 }
 
 static void send_hid_report(bool keys_pressed)
@@ -77,7 +115,6 @@ static void send_hid_report(bool keys_pressed)
 
 }
 
-
 void handle_hid_task(bool const keys_pressed) {
     if (tud_suspended() && keys_pressed)
     {
@@ -98,15 +135,21 @@ void handle_hid_task(bool const keys_pressed) {
 	}
 }
 
-void change_current_mode(void)
+void change_current_mode(int8_t direction)
 {
-	if (current_mode + 1 == mode_count) {
-		current_mode = 0;
-	} else {
-		current_mode++;
+	if (direction == 0) {
+		return;
 	}
+
+	current_mode += direction;
+	if (current_mode == mode_count) {
+		current_mode = 0;
+	}
+	if (current_mode < 0) {
+		current_mode = mode_count - 1;
+	}
+
 	draw_current_mode();
-	busy_wait_ms(200);
 }
 
 // Every 10ms, we poll the pins
@@ -123,29 +166,32 @@ void keys_task(void)
     // Check for keys pressed
     bool const keys_pressed = keyboard.update(current_mode);
 
-	// Pressing the encoder changes mode
-	if (keys_pressed && keyboard.keys_pressed[0] == GPIO_ENCODER_SW) {
-		change_current_mode();
-		return;
-	}
-
 	if (current_mode == MODE_KEYPAD){
 		handle_hid_task(keys_pressed);
 	}
 }
 
+uint8_t lastMode = 0;
+
 int main()
 {
-    stdio_init_all();
-    busy_wait_ms(250);
+	stdio_init_all();
+	busy_wait_ms(250);
 
 	setup_oled();
+	setup_encoder();
 
 	tusb_init();
 
 	while (true) {
-		tud_task(); // tinyusb device task
-		keys_task();
+		tud_task();				// tinyusb device task
+		rotary_task(&encoder);	// handle encoder rotation, NOT WORKING
+		
+		if (encoder.triggered && encoder.dir != 0) {
+			change_current_mode(encoder.dir);
+			continue;
+		}
+		keys_task();			// handle key presses
 	}
 }
 
@@ -189,16 +235,16 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
 // Invoked when device is mounted
 void tud_mount_cb(void)
 {
-	oled_screen.fillRect(0, 17, 64, 31, BLACK);
-	oled_screen.writeCharString(0, 17, (char *)"MOUNTED");
+	oled_screen.fillRect(100, 0, 27, 14, BLACK);
+	oled_screen.writeCharString(122, 3, (char *)"M");
 	oled_screen.OLEDupdate();
 }
 
 // Invoked when device is unmounted
 void tud_umount_cb(void)
 {
-	oled_screen.fillRect(0, 17, 64, 31, BLACK);
-	oled_screen.writeCharString(0, 17, (char *)"NOT MOUNTED");
+	oled_screen.fillRect(100, 0, 27, 14, BLACK);
+	oled_screen.writeCharString(122, 3, (char *)"N");
 	oled_screen.OLEDupdate();
 }
 
@@ -208,8 +254,8 @@ void tud_umount_cb(void)
 void tud_suspend_cb(bool remote_wakeup_en)
 {
     (void)remote_wakeup_en;
-	oled_screen.fillRect(0, 17, 64, 31, BLACK);
-	oled_screen.writeCharString(0, 17, (char *)"SUSPENDED");
+	oled_screen.fillRect(100, 0, 27, 14, BLACK);
+	oled_screen.writeCharString(122, 3, (char *)"S");
 	oled_screen.OLEDupdate();
 }
 

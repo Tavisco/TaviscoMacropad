@@ -35,7 +35,11 @@ pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(TaviscoMacropad TaviscoMacropad.cpp usb_descriptors.c)
+add_executable(TaviscoMacropad
+    rotary_encoder.c
+    TaviscoMacropad.cpp
+    usb_descriptors.c
+    )
 
 pico_set_program_name(TaviscoMacropad "TaviscoMacropad")
 pico_set_program_version(TaviscoMacropad "0.1")

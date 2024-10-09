@@ -1,8 +1,8 @@
 #pragma once
 
 // Encoder
-#define GPIO_ENCODER_A	28
-#define GPIO_ENCODER_B	27
+#define GPIO_ENCODER_A	27
+#define GPIO_ENCODER_B	28
 
 // OLED
 #define GPIO_OLED_SDA	2

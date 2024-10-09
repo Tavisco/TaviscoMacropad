@@ -22,8 +22,9 @@ class KeyBoard
 {
 private:
 	// ===========================================================================
-	const static size_t num_pins = 9;
+	const static size_t num_pins = 10;
 	const PinKey pins[num_pins] = {
+		{GPIO_ENCODER_SW, HID_KEY_0},
 		{GPIO_KEY_7, HID_KEY_7}, {GPIO_KEY_8, HID_KEY_8}, {GPIO_KEY_9, HID_KEY_9},
 		{GPIO_KEY_4, HID_KEY_4}, {GPIO_KEY_5, HID_KEY_5}, {GPIO_KEY_6, HID_KEY_6},
 		{GPIO_KEY_1, HID_KEY_1}, {GPIO_KEY_2, HID_KEY_2}, {GPIO_KEY_3, HID_KEY_3},
@@ -49,11 +50,6 @@ public:
 
 	KeyBoard()
 	{
-		// Set up knob button
-		gpio_init(GPIO_ENCODER_SW);
-		gpio_pull_up(GPIO_ENCODER_SW);
-		gpio_set_dir(GPIO_ENCODER_SW, GPIO_IN);
-
 		// set all pins to pulled up inputs
 		for (size_t i = 0; i < num_pins; i++)
 		{
@@ -71,13 +67,6 @@ public:
 		for (size_t i = 0; i < 6; i++)
 		{
 			keys_pressed[i] = 0;
-		}
-
-		// First check for knob press
-		if (gpio_get(GPIO_ENCODER_SW) == 0)
-		{
-			keys_pressed[0] = GPIO_ENCODER_SW;
-			return true;
 		}
 
 		// read pins and set max 6 keycodes
