@@ -257,12 +257,14 @@ void tud_suspend_cb(bool remote_wakeup_en)
 	oled_screen.fillRect(100, 0, 27, 14, BLACK);
 	oled_screen.writeCharString(122, 3, (char *)"S");
 	oled_screen.OLEDupdate();
+	oled_screen.OLEDEnable(0);
 }
 
 // Invoked when usb bus is resumed
 void tud_resume_cb(void)
 {
-	oled_screen.fillRect(0, 17, 64, 31, BLACK);
-	oled_screen.writeCharString(0, 17, (char *)"(RES)MOUNTED");
+	oled_screen.OLEDEnable(1);
+	oled_screen.fillRect(100, 0, 27, 14, BLACK);
+	oled_screen.writeCharString(122, 3, (char *)"R");
 	oled_screen.OLEDupdate();
 }
