@@ -176,7 +176,7 @@ uint8_t lastMode = 0;
 int main()
 {
 	stdio_init_all();
-	busy_wait_ms(250);
+	//busy_wait_ms(250);
 
 	setup_oled();
 	setup_encoder();
@@ -236,7 +236,7 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
 void tud_mount_cb(void)
 {
 	oled_screen.fillRect(100, 0, 27, 14, BLACK);
-	oled_screen.writeCharString(122, 3, (char *)"M");
+	oled_screen.OLEDBitmap(109, 3, 16, 9, usb_icon, false, sizeof(usb_icon)/sizeof(uint8_t));
 	oled_screen.OLEDupdate();
 }
 
@@ -265,6 +265,6 @@ void tud_resume_cb(void)
 {
 	oled_screen.OLEDEnable(1);
 	oled_screen.fillRect(100, 0, 27, 14, BLACK);
-	oled_screen.writeCharString(122, 3, (char *)"R");
+	oled_screen.OLEDBitmap(109, 3, 16, 9, usb_icon, false, sizeof(usb_icon)/sizeof(uint8_t));
 	oled_screen.OLEDupdate();
 }
