@@ -12,7 +12,7 @@
 
 const uint8_t mode_count = 5;
 
-const char *modes[]= {"Numpad", "Macros", "Multimedia", "IoT", "Osu!"};
+const char *modes[]= {"Numpad", "Git", "Multimedia", "IoT", "Osu!"};
 
 uint8_t screen_buffer[OLED_SIZE]; // Define a buffer to cover whole screen  128 * 64/8
 SSD1306 oled_screen(OLED_WIDTH, OLED_HEIGHT);
@@ -28,13 +28,12 @@ void draw_current_mode(void) {
 	
 	oled_screen.fillRect(0, 16, 128, 48, BLACK);
 
-	if (current_mode == MODE_KEYPAD){
-		//TODO: Move this a proper file?
+	if (current_mode == MODE_KEYPAD) {
 		oled_screen.setFont(pFontMega);
 		oled_screen.writeCharString(00, 16, (char *)"7");
 		oled_screen.writeCharString(18, 16, (char *)"8");
 		oled_screen.writeCharString(36, 16, (char *)"9");
-		oled_screen.writeCharString(112, 16, (char *)"0");
+		oled_screen.writeCharString(54, 16, (char *)"0");
 		oled_screen.writeCharString(00, 31, (char *)"4");
 		oled_screen.writeCharString(18, 31, (char *)"5");
 		oled_screen.writeCharString(36, 31, (char *)"6");
@@ -42,6 +41,27 @@ void draw_current_mode(void) {
 		oled_screen.writeCharString(18, 48, (char *)"2");
 		oled_screen.writeCharString(36, 48, (char *)"3");
 		oled_screen.setFont(pFontDefault);
+	}
+
+	if (current_mode == MODE_GIT) {
+		// Vertical lines
+		oled_screen.drawLine(43, 16, 43, 64, WHITE);
+		oled_screen.drawLine(85, 16, 85, 64, WHITE);
+		// Horizontal lines
+		oled_screen.drawLine(0, 32, 128, 32, WHITE);
+		oled_screen.drawLine(0, 48, 128, 48, WHITE);
+		// 1st row
+		oled_screen.writeCharString(17, 20, (char *)"\"");
+		oled_screen.writeCharString(49, 20, (char *)"Stash");
+		oled_screen.writeCharString(87, 20, (char *)"St pop");
+		// 2nd row
+		oled_screen.writeCharString(10, 36, (char *)"Diff");
+		oled_screen.writeCharString(53, 36, (char *)"Pull");
+		oled_screen.writeCharString(95, 36, (char *)"Push");
+		// 3rd row
+		oled_screen.writeCharString(03, 53, (char *)"Status");
+		oled_screen.writeCharString(50, 53, (char *)"Add .");
+		oled_screen.writeCharString(87, 53, (char *)"Commit");
 	}
 
 	oled_screen.OLEDupdate();
