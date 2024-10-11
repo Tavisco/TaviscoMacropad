@@ -107,6 +107,107 @@ void setup_encoder(void) {
     encoder.current_value = 1;
 }
 
+// Function to convert ASCII characters to USB HID keycodes
+uint8_t ascii_to_keycode(char c) {
+    // This is a basic example; you'll need a full table for all characters
+    if (c >= 'a' && c <= 'z') {
+        return HID_KEY_A + (c - 'a');  // 'a' starts from HID_KEY_A
+    }
+    if (c >= 'A' && c <= 'Z') {
+        return HID_KEY_A + (c - 'A');  // Capital letters are the same keycodes
+    }
+    if (c == ' ') {
+        return HID_KEY_SPACE;          // Space key
+    }
+	if (c == '.') {
+		return HID_KEY_PERIOD;
+	}
+	if (c == '-') {
+		return HID_KEY_MINUS;
+	}
+	if (c == '\"') {
+		return HID_KEY_APOSTROPHE;
+	}
+    // Add more characters as needed
+    return 0;
+}
+
+void send_string(const char* str) {
+    for (const char* p = str; *p != '\0'; p++) {
+		// Wait for the host to be ready
+		while (!tud_hid_ready()) {
+			tud_task();  // TinyUSB device task
+		}
+
+        // Get the keycode for the current character
+        uint8_t keycode = ascii_to_keycode(*p);
+
+		uint8_t keys_pressed[6] = {0}; 
+		keys_pressed[0] = keycode;
+
+        if (keycode) {
+            // Send key press report (0 is the modifier byte)
+            tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, keys_pressed);
+
+            // Delay to simulate keypress duration
+            sleep_ms(10);
+			tud_task();
+
+			uint8_t empty_keys[6] = {0, 0, 0, 0, 0, 0};
+            tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, empty_keys);
+
+			// Slightly longer delay to ensure the key release is registered
+            sleep_ms(10);
+        }
+
+        str++;
+    }
+}
+
+void send_git_command(bool keys_pressed)
+{
+	// skip if hid is not ready yet
+    if (!keys_pressed)
+    {
+        return;
+    }
+
+	switch (keyboard.keys_pressed[0])
+	{
+	case GPIO_KEY_7:
+		send_string("\"");
+		break;
+	case GPIO_KEY_8:
+		send_string("git stash");
+		break;
+	case GPIO_KEY_9:
+		send_string("git stash pop");
+		break;
+	case GPIO_KEY_4:
+		send_string("git diff");
+		break;
+	case GPIO_KEY_5:
+		send_string("git pull");
+		break;
+	case GPIO_KEY_6:
+		send_string("git push");
+		break;
+	case GPIO_KEY_1:
+		send_string("git status");
+		break;
+	case GPIO_KEY_2:
+		send_string("git add .");
+		break;
+	case GPIO_KEY_3:
+		send_string("git commit -m");
+		//send_string("\"\"");
+		//send_string("<--");
+		break;
+	default:
+		break;
+	}
+}
+
 static void send_hid_report(bool keys_pressed)
 {
     // skip if hid is not ready yet
@@ -121,7 +222,6 @@ static void send_hid_report(bool keys_pressed)
     if (keys_pressed)
     {
         tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, keyboard.keys_pressed);
-		tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
         send_empty = true;
 		return;
     }
@@ -149,7 +249,9 @@ void handle_hid_task(bool const keys_pressed) {
 	case MODE_KEYPAD:
 		send_hid_report(keys_pressed);
 		break;
-	
+	case MODE_GIT:
+		send_git_command(keys_pressed);
+		break;
 	default:
 		break;
 	}
@@ -186,7 +288,7 @@ void keys_task(void)
     // Check for keys pressed
     bool const keys_pressed = keyboard.update(current_mode);
 
-	if (current_mode == MODE_KEYPAD){
+	if (current_mode == MODE_KEYPAD || current_mode == MODE_GIT){
 		handle_hid_task(keys_pressed);
 	}
 }
@@ -202,6 +304,10 @@ int main()
 	setup_encoder();
 
 	tusb_init();
+
+	while (!tud_hid_ready()) {
+		tud_task();  // TinyUSB device task
+	}
 
 	while (true) {
 		tud_task();				// tinyusb device task

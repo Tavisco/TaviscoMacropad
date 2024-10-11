@@ -40,7 +40,7 @@ private:
 			break;
 		
 		default:
-			return pin_key.keypad_key;
+			return pin_key.gpio_pin;
 			break;
 		}
 	}
