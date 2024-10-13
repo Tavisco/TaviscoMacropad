@@ -51,7 +51,7 @@ void draw_current_mode(void) {
 		oled_screen.drawLine(0, 32, 128, 32, WHITE);
 		oled_screen.drawLine(0, 48, 128, 48, WHITE);
 		// 1st row
-		oled_screen.writeCharString(17, 20, (char *)"\"");
+		//oled_screen.writeCharString(17, 20, (char *)"\"");
 		oled_screen.writeCharString(49, 20, (char *)"Stash");
 		oled_screen.writeCharString(87, 20, (char *)"St pop");
 		// 2nd row
@@ -128,11 +128,14 @@ uint8_t ascii_to_keycode(char c) {
 	if (c == '\"') {
 		return HID_KEY_APOSTROPHE;
 	}
+	if (c == '<') {
+		return HID_KEY_ARROW_LEFT;
+	}
     // Add more characters as needed
     return 0;
 }
 
-void send_string(const char* str) {
+void send_string(const char* str, uint8_t modifier) {
     for (const char* p = str; *p != '\0'; p++) {
 		// Wait for the host to be ready
 		while (!tud_hid_ready()) {
@@ -143,11 +146,12 @@ void send_string(const char* str) {
         uint8_t keycode = ascii_to_keycode(*p);
 
 		uint8_t keys_pressed[6] = {0}; 
+	
 		keys_pressed[0] = keycode;
 
         if (keycode) {
             // Send key press report (0 is the modifier byte)
-            tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, keys_pressed);
+            tud_hid_keyboard_report(REPORT_ID_KEYBOARD, modifier, keys_pressed);
 
             // Delay to simulate keypress duration
             sleep_ms(10);
@@ -164,6 +168,11 @@ void send_string(const char* str) {
     }
 }
 
+void send_string(const char* str)
+{
+	send_string(str, 0);
+}
+
 void send_git_command(bool keys_pressed)
 {
 	// skip if hid is not ready yet
@@ -175,7 +184,7 @@ void send_git_command(bool keys_pressed)
 	switch (keyboard.keys_pressed[0])
 	{
 	case GPIO_KEY_7:
-		send_string("\"");
+		
 		break;
 	case GPIO_KEY_8:
 		send_string("git stash");
@@ -199,9 +208,9 @@ void send_git_command(bool keys_pressed)
 		send_string("git add .");
 		break;
 	case GPIO_KEY_3:
-		send_string("git commit -m");
-		//send_string("\"\"");
-		//send_string("<--");
+		send_string("git commit -m ");
+		send_string("\"\"", KEYBOARD_MODIFIER_LEFTSHIFT);
+		send_string("<");
 		break;
 	default:
 		break;
