@@ -11,7 +11,6 @@
 #include "rotary_encoder.h"
 
 const uint8_t mode_count = 5;
-
 const char *modes[]= {"Numpad", "Git", "Multimedia", "IoT", "Osu!"};
 
 uint8_t screen_buffer[OLED_SIZE]; // Define a buffer to cover whole screen  128 * 64/8
@@ -19,6 +18,8 @@ SSD1306 oled_screen(OLED_WIDTH, OLED_HEIGHT);
 uint8_t current_mode = 0;
 KeyBoard keyboard;
 rotary_encoder_t encoder;
+uint32_t last_interaction_ms = 0;
+bool is_in_screensaver_mode = false;
 
 void keys_task(void);
 
@@ -67,10 +68,28 @@ void draw_current_mode(void) {
 	oled_screen.OLEDupdate();
 }
 
-void setup_oled(void) {
+void draw_ui(void)
+{
+	oled_screen.OLEDFillScreen(0x00, 0);
+	oled_screen.setFont(pFontDefault);
+	oled_screen.drawLine(0,15,128,15,WHITE);
 
-	printf("OLED SSD1306 :: Start!\r\n");
-	
+	draw_current_mode();
+}
+
+void update_last_interaction(void)
+{
+	last_interaction_ms = board_millis();
+
+	if (is_in_screensaver_mode) {
+		printf("Exiting from screensave mode!\r\n");
+		oled_screen.OLEDEnable(1);
+		//draw_ui();
+		is_in_screensaver_mode = false;
+	}
+}
+
+void setup_oled(void) {
 	while(oled_screen.OLEDbegin(i2C_ADDRESS, i2c1,  I2C_SPEED, GPIO_OLED_SDA, GPIO_OLED_SCLK) != true)
 	{
 		printf("SetupTest ERROR : Failed to initialize OLED!\r\n");
@@ -82,11 +101,8 @@ void setup_oled(void) {
 		printf("SetupTest : ERROR : OLEDSetBufferPtr Failed!\r\n");
 		while(1){busy_wait_ms(1000);}
 	} // Initialize the buffer
-	oled_screen.OLEDFillScreen(0x00, 0);
-	oled_screen.setFont(pFontDefault);
-	oled_screen.drawLine(0,15,128,15,WHITE);
 
-	draw_current_mode();
+	draw_ui();
 	busy_wait_ms(100);
 }
 
@@ -272,6 +288,8 @@ void change_current_mode(int8_t direction)
 		return;
 	}
 
+	update_last_interaction();
+
 	current_mode += direction;
 	if (current_mode == mode_count) {
 		current_mode = 0;
@@ -282,7 +300,7 @@ void change_current_mode(int8_t direction)
 
 	draw_current_mode();
 
-	printf("Changed mode to [%s]. Direction: [%i].\r\n", modes[current_mode], direction);
+	printf("Changed mode to [%s], direction: [%i]\r\n", modes[current_mode], direction);
 }
 
 void keys_task(void)
@@ -293,27 +311,48 @@ void keys_task(void)
     {
         return; // not enough time
     }
+
     start_ms += POLL_INTERVAL;
 
     // Check for keys pressed
     bool const keys_pressed = keyboard.update(current_mode);
+
+	if (keys_pressed)
+	{
+		update_last_interaction();
+	}
 
 	if (current_mode == MODE_KEYPAD || current_mode == MODE_GIT){
 		handle_hid_task(keys_pressed);
 	}
 }
 
-uint8_t lastMode = 0;
+void screensave_task(void)
+{
+	bool should_be_in_screensave = board_millis() - last_interaction_ms > SCREENSAVER_TIME_S*1000;
+	if (should_be_in_screensave && !is_in_screensaver_mode)
+	{
+		printf("Entering screensave mode\r\n");
+		is_in_screensaver_mode = true;
+		oled_screen.OLEDEnable(0);
+	}
+}
 
 int main()
 {
 	stdio_uart_init_full(uart0, 115200, 12, 13);
-
+	
+	printf("=-=-=- Welcome to TaviscoMacropad! -=-=-=\r\n");
+	printf("Setting up OLED\r\n");
 	setup_oled();
+	
+	printf("Setting up Rotary Encoder\r\n");
 	setup_encoder();
 
+	printf("Setting up USB stack\r\n");
 	tusb_init();
 
+	printf("Ready! Entering main loop\r\n");
 	while (true) {
 		tud_task();				// tinyusb device task
 		rotary_task(&encoder);	// handle encoder rotation, NOT WORKING
@@ -322,7 +361,9 @@ int main()
 			change_current_mode(encoder.dir);
 			continue;
 		}
+
 		keys_task();			// handle key presses
+		screensave_task();
 	}
 }
 
