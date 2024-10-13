@@ -29,8 +29,9 @@
 #define MODE_IOT			3
 #define MODE_OSU			4
 
-// Preferences
-#define SCREENSAVER_TIME_S	10
+// Preferences - Screensaver
+#define SCREENSAVER_TIME_S	120
+#define BLIP_FREQUENCY_S	3
 
 // Bitmaps
 const uint8_t usb_icon[] = {

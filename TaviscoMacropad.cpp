@@ -20,6 +20,7 @@ KeyBoard keyboard;
 rotary_encoder_t encoder;
 uint32_t last_interaction_ms = 0;
 bool is_in_screensaver_mode = false;
+bool usb_mounted = false;
 
 void keys_task(void);
 
@@ -70,9 +71,15 @@ void draw_current_mode(void) {
 
 void draw_ui(void)
 {
-	oled_screen.OLEDFillScreen(0x00, 0);
+	printf("Drawing UI\r\n");
+	oled_screen.fillScreen(BLACK);
 	oled_screen.setFont(pFontDefault);
 	oled_screen.drawLine(0,15,128,15,WHITE);
+
+	if (usb_mounted)
+	{
+		oled_screen.OLEDBitmap(109, 3, 16, 9, usb_icon, false, sizeof(usb_icon)/sizeof(uint8_t));
+	}
 
 	draw_current_mode();
 }
@@ -84,7 +91,7 @@ void update_last_interaction(void)
 	if (is_in_screensaver_mode) {
 		printf("Exiting from screensave mode!\r\n");
 		oled_screen.OLEDEnable(1);
-		//draw_ui();
+		draw_ui();
 		is_in_screensaver_mode = false;
 	}
 }
@@ -329,12 +336,33 @@ void keys_task(void)
 
 void screensave_task(void)
 {
+	static uint32_t last_blip_ms = 0;
+
+	if (is_in_screensaver_mode)
+	{
+		bool should_blip = board_millis() - last_blip_ms > BLIP_FREQUENCY_S*1000;
+
+		if (should_blip)
+		{
+			oled_screen.fillScreen(BLACK);
+			oled_screen.drawPixel(0, 63, WHITE);
+			oled_screen.OLEDEnable(1);
+			oled_screen.OLEDupdate();
+			sleep_ms(750);
+			oled_screen.OLEDEnable(0);
+			last_blip_ms = board_millis();
+		}
+		return;
+	}
+
 	bool should_be_in_screensave = board_millis() - last_interaction_ms > SCREENSAVER_TIME_S*1000;
-	if (should_be_in_screensave && !is_in_screensaver_mode)
+
+	if (should_be_in_screensave)
 	{
 		printf("Entering screensave mode\r\n");
 		is_in_screensaver_mode = true;
 		oled_screen.OLEDEnable(0);
+		last_blip_ms = board_millis();
 	}
 }
 
@@ -342,7 +370,7 @@ int main()
 {
 	stdio_uart_init_full(uart0, 115200, 12, 13);
 	
-	printf("=-=-=- Welcome to TaviscoMacropad! -=-=-=\r\n");
+	printf("\r\n\r\n=-=-=- Welcome to TaviscoMacropad! -=-=-=\r\n");
 	printf("Setting up OLED\r\n");
 	setup_oled();
 	
@@ -407,9 +435,9 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
 // Invoked when device is mounted
 void tud_mount_cb(void)
 {
-	oled_screen.fillRect(100, 0, 27, 14, BLACK);
-	oled_screen.OLEDBitmap(109, 3, 16, 9, usb_icon, false, sizeof(usb_icon)/sizeof(uint8_t));
-	oled_screen.OLEDupdate();
+	printf("USB is mounted!\r\n");
+	usb_mounted = true;
+	draw_ui();
 }
 
 // Invoked when device is unmounted
