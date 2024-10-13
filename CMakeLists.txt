@@ -45,7 +45,7 @@ pico_set_program_name(TaviscoMacropad "TaviscoMacropad")
 pico_set_program_version(TaviscoMacropad "0.1")
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(TaviscoMacropad 0)
+pico_enable_stdio_uart(TaviscoMacropad 1)
 pico_enable_stdio_usb(TaviscoMacropad 0)
 
 # Add the standard library to the build

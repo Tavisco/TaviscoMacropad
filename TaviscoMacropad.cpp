@@ -272,9 +272,10 @@ void change_current_mode(int8_t direction)
 	}
 
 	draw_current_mode();
+
+	printf("Changed mode to [%s]. Direction: [%i].\r\n", modes[current_mode], direction);
 }
 
-// Every 10ms, we poll the pins
 void keys_task(void)
 {
     static uint32_t start_ms = 0;
@@ -297,17 +298,12 @@ uint8_t lastMode = 0;
 
 int main()
 {
-	stdio_init_all();
-	//busy_wait_ms(250);
+	stdio_uart_init_full(uart0, 115200, 12, 13);
 
 	setup_oled();
 	setup_encoder();
 
 	tusb_init();
-
-	while (!tud_hid_ready()) {
-		tud_task();  // TinyUSB device task
-	}
 
 	while (true) {
 		tud_task();				// tinyusb device task
