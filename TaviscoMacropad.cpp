@@ -51,7 +51,7 @@ void draw_current_mode(void) {
 		oled_screen.drawLine(0, 32, 128, 32, WHITE);
 		oled_screen.drawLine(0, 48, 128, 48, WHITE);
 		// 1st row
-		//oled_screen.writeCharString(17, 20, (char *)"\"");
+		//oled_screen.writeCharString(07, 20, (char *)"Enter");
 		oled_screen.writeCharString(49, 20, (char *)"Stash");
 		oled_screen.writeCharString(87, 20, (char *)"St pop");
 		// 2nd row
@@ -184,7 +184,7 @@ void send_git_command(bool keys_pressed)
 	switch (keyboard.keys_pressed[0])
 	{
 	case GPIO_KEY_7:
-		
+
 		break;
 	case GPIO_KEY_8:
 		send_string("git stash");
