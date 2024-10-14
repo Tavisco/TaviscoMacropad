@@ -26,8 +26,9 @@
 #define MODE_KEYPAD			0
 #define MODE_GIT			1
 #define MODE_MULTIMEDIA		2
-#define MODE_IOT			3
-#define MODE_OSU			4
+#define MODE_DOCEKR			3
+#define MODE_IOT			4
+#define MODE_OSU			5
 
 // Preferences - Screensaver
 #define SCREENSAVER_TIME_S	120

@@ -10,8 +10,8 @@
 #include "keyboard.h"
 #include "rotary_encoder.h"
 
-const uint8_t mode_count = 5;
-const char *modes[]= {"Numpad", "Git", "Multimedia", "IoT", "Osu!"};
+const uint8_t mode_count = 6;
+const char *modes[]= {"Numpad", "Git", "Multimedia", "Docker", "IoT", "Osu!"};
 
 uint8_t screen_buffer[OLED_SIZE]; // Define a buffer to cover whole screen  128 * 64/8
 SSD1306 oled_screen(OLED_WIDTH, OLED_HEIGHT);
@@ -23,6 +23,16 @@ bool is_in_screensaver_mode = false;
 bool usb_mounted = false;
 
 void keys_task(void);
+
+void draw_key_lines(void)
+{
+	// Vertical lines
+	oled_screen.drawLine(43, 16, 43, 64, WHITE);
+	oled_screen.drawLine(85, 16, 85, 64, WHITE);
+	// Horizontal lines
+	oled_screen.drawLine(0, 32, 128, 32, WHITE);
+	oled_screen.drawLine(0, 48, 128, 48, WHITE);
+}
 
 void draw_current_mode(void) {
 	oled_screen.fillRect(0, 0, 64, 14, BLACK);
@@ -46,12 +56,7 @@ void draw_current_mode(void) {
 	}
 
 	if (current_mode == MODE_GIT) {
-		// Vertical lines
-		oled_screen.drawLine(43, 16, 43, 64, WHITE);
-		oled_screen.drawLine(85, 16, 85, 64, WHITE);
-		// Horizontal lines
-		oled_screen.drawLine(0, 32, 128, 32, WHITE);
-		oled_screen.drawLine(0, 48, 128, 48, WHITE);
+		draw_key_lines();
 		// 1st row
 		//oled_screen.writeCharString(07, 20, (char *)"Enter");
 		oled_screen.writeCharString(49, 20, (char *)"Stash");
@@ -64,6 +69,23 @@ void draw_current_mode(void) {
 		oled_screen.writeCharString(03, 53, (char *)"Status");
 		oled_screen.writeCharString(50, 53, (char *)"Add .");
 		oled_screen.writeCharString(87, 53, (char *)"Commit");
+	}
+
+	if (current_mode == MODE_DOCEKR) {
+		draw_key_lines();
+
+		// 1st row
+		oled_screen.writeCharString(00, 20, (char *)"Torchic");
+		oled_screen.writeCharString(55, 20, (char *)"DCU");
+		oled_screen.writeCharString(86, 20, (char *)"Treecko");
+		// 2nd row
+		oled_screen.writeCharString(15, 36, (char *)"PS");
+		oled_screen.writeCharString(53, 36, (char *)"NVIM");
+		oled_screen.writeCharString(100, 36, (char *)"DCL");
+		// 3rd row
+		oled_screen.writeCharString(12, 53, (char *)"DCD");
+		oled_screen.writeCharString(55, 53, (char *)"DCP");
+		oled_screen.writeCharString(95, 53, (char *)"DCUD");
 	}
 
 	oled_screen.OLEDupdate();
@@ -130,7 +152,6 @@ void setup_encoder(void) {
     encoder.current_value = 1;
 }
 
-// Function to convert ASCII characters to USB HID keycodes
 uint8_t ascii_to_keycode(char c) {
     // This is a basic example; you'll need a full table for all characters
     if (c >= 'a' && c <= 'z') {
@@ -153,6 +174,12 @@ uint8_t ascii_to_keycode(char c) {
 	}
 	if (c == '<') {
 		return HID_KEY_ARROW_LEFT;
+	}
+	if (c == '`') {
+		return HID_KEY_GRAVE;
+	}
+	if (c == '/') {
+		return HID_KEY_SLASH;
 	}
     // Add more characters as needed
     return 0;
@@ -240,6 +267,52 @@ void send_git_command(bool keys_pressed)
 	}
 }
 
+void send_docker_command(bool keys_pressed)
+{
+	// skip if hid is not ready yet
+    if (!keys_pressed)
+    {
+        return;
+    }
+
+	switch (keyboard.keys_pressed[0])
+	{
+	case GPIO_KEY_7:
+		send_string("cd ");
+		send_string("`", KEYBOARD_MODIFIER_LEFTSHIFT);
+		send_string("/composes/torchic");
+		break;
+	case GPIO_KEY_8:
+		send_string("docker compose up");
+		break;
+	case GPIO_KEY_9:
+		send_string("cd ");
+		send_string("`", KEYBOARD_MODIFIER_LEFTSHIFT);
+		send_string("/composes/treecko");
+		break;
+	case GPIO_KEY_4:
+		send_string("docker ps");
+		break;
+	case GPIO_KEY_5:
+		send_string("nvim compose.yml");
+		break;
+	case GPIO_KEY_6:
+		send_string("docker compose logs -f");
+		break;
+	case GPIO_KEY_1:
+		send_string("docker compose down");
+		break;
+	case GPIO_KEY_2:
+		send_string("docker compose pull");
+		break;
+	case GPIO_KEY_3:
+		send_string("docker compose up -d");
+		break;
+	default:
+		break;
+	}
+}
+
 static void send_hid_report(bool keys_pressed)
 {
     // skip if hid is not ready yet
@@ -284,6 +357,8 @@ void handle_hid_task(bool const keys_pressed) {
 	case MODE_GIT:
 		send_git_command(keys_pressed);
 		break;
+	case MODE_DOCEKR:
+		send_docker_command(keys_pressed);
 	default:
 		break;
 	}
@@ -329,7 +404,7 @@ void keys_task(void)
 		update_last_interaction();
 	}
 
-	if (current_mode == MODE_KEYPAD || current_mode == MODE_GIT){
+	if (current_mode == MODE_KEYPAD || current_mode == MODE_GIT || current_mode == MODE_DOCEKR){
 		handle_hid_task(keys_pressed);
 	}
 }
