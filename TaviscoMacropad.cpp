@@ -15,7 +15,7 @@ const char *modes[]= {"Numpad", "Git", "Multimedia", "Docker", "IoT", "Osu!"};
 
 uint8_t screen_buffer[OLED_SIZE]; // Define a buffer to cover whole screen  128 * 64/8
 SSD1306 oled_screen(OLED_WIDTH, OLED_HEIGHT);
-uint8_t current_mode = 0;
+int8_t current_mode = 0;
 KeyBoard keyboard;
 rotary_encoder_t encoder;
 uint32_t last_interaction_ms = 0;
@@ -376,13 +376,14 @@ void change_current_mode(int8_t direction)
 	if (current_mode == mode_count) {
 		current_mode = 0;
 	}
+
 	if (current_mode < 0) {
 		current_mode = mode_count - 1;
 	}
 
 	draw_current_mode();
-
-	printf("Changed mode to [%s], direction: [%i]\r\n", modes[current_mode], direction);
+	printf("Changed mode to [%s], count[%i], direction: [%i]\r\n", modes[current_mode], current_mode, direction);
+	sleep_ms(150);
 }
 
 void keys_task(void)
