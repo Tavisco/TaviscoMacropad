@@ -73,7 +73,11 @@ uint8_t const *tud_descriptor_device_cb(void)
 // HID Report Descriptor
 //--------------------------------------------------------------------+
 
-uint8_t const desc_hid_report[] = {TUD_HID_REPORT_DESC_KEYBOARD(HID_REPORT_ID(REPORT_ID_KEYBOARD))};
+uint8_t const desc_hid_report[] = 
+{
+    TUD_HID_REPORT_DESC_KEYBOARD(HID_REPORT_ID(REPORT_ID_KEYBOARD)),
+    TUD_HID_REPORT_DESC_CONSUMER(HID_REPORT_ID(REPORT_ID_CONSUMER_CONTROL))
+};
 
 // Invoked when received GET HID REPORT DESCRIPTOR
 // Application return pointer to descriptor
@@ -172,9 +176,9 @@ uint8_t const *tud_descriptor_configuration_cb(uint8_t index)
 char const *string_desc_arr[] =
     {
         (const char[]){0x09, 0x04}, // 0: is supported language is English (0x0409)
-        "rktrlng",                  // 1: Manufacturer
-        "TinyUSB keyboard",         // 2: Product
-        "123456",                   // 3: Serials, should use chip ID
+        "Tavisco",                  // 1: Manufacturer
+        "Tavisco Macropad v1",         // 2: Product
+        "000001",                   // 3: Serials, should use chip ID
 };
 
 static uint16_t _desc_str[32];

@@ -348,7 +348,35 @@ static void send_hid_report(bool keys_pressed)
 		tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
 	}
 	send_empty = false;
+}
 
+static void send_consumer_hid_report(bool keys_pressed)
+{
+    // skip if hid is not ready yet
+    if (!tud_hid_ready())
+    {
+        return;
+    }
+
+    // avoid sending multiple zero reports
+    static bool send_empty = false;
+
+    if (keys_pressed)
+    {
+        tud_hid_report(REPORT_ID_CONSUMER_CONTROL, &keyboard.keys_pressed[0], 2);
+		// uint16_t volume_down = HID_USAGE_CONSUMER_VOLUME_DECREMENT;
+      	// tud_hid_report(REPORT_ID_CONSUMER_CONTROL, &volume_down, 2);
+        send_empty = true;
+		return;
+    }
+
+	// send empty key report if previously has key pressed
+	if (send_empty)
+	{
+		uint16_t empty_key = 0;
+		tud_hid_report(REPORT_ID_CONSUMER_CONTROL, &empty_key, 2);
+	}
+	send_empty = false;
 }
 
 void handle_hid_task(bool const keys_pressed) {
@@ -364,6 +392,9 @@ void handle_hid_task(bool const keys_pressed) {
 	{
 	case MODE_KEYPAD:
 		send_hid_report(keys_pressed);
+		break;
+	case MODE_MULTIMEDIA:
+		send_consumer_hid_report(keys_pressed);
 		break;
 	case MODE_GIT:
 		send_git_command(keys_pressed);
@@ -416,7 +447,7 @@ void keys_task(void)
 		update_last_interaction();
 	}
 
-	if (current_mode == MODE_KEYPAD || current_mode == MODE_GIT || current_mode == MODE_DOCEKR){
+	if (current_mode == MODE_KEYPAD || current_mode == MODE_GIT || current_mode == MODE_DOCEKR || current_mode == MODE_MULTIMEDIA){
 		handle_hid_task(keys_pressed);
 	}
 }
