@@ -44,6 +44,6 @@ void rotary_task(rotary_encoder_t *data) {
         data->wait_until_trigger = current_us + DEBOUNCE_REPORT;
     }
 
-    data->last_filtered_a = data->filtered_a;    
+    data->last_filtered_a = data->filtered_a;
     data->last_a = a;
 }

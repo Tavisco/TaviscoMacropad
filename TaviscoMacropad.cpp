@@ -358,6 +358,40 @@ static void send_consumer_hid_report(bool keys_pressed)
         return;
     }
 
+	if (keyboard.keys_pressed[0] == GPIO_KEY_5)
+	{
+		while (keyboard.keys_pressed[0] == GPIO_KEY_5)
+		{
+			while (!tud_hid_ready()) {
+				tud_task();  // TinyUSB device task
+			}
+
+			rotary_task(&encoder);
+			if (encoder.triggered && encoder.dir != 0)
+			{
+				uint16_t volume_key = 
+					encoder.dir == 1 ? HID_USAGE_CONSUMER_VOLUME_INCREMENT : HID_USAGE_CONSUMER_VOLUME_DECREMENT;
+
+				printf("%i", encoder.dir);
+
+ 				tud_hid_report(REPORT_ID_CONSUMER_CONTROL, &volume_key, 2);
+
+				// Delay to simulate keypress duration
+				sleep_ms(10);
+				tud_task();
+
+				uint16_t empty_key = 0;
+				tud_hid_report(REPORT_ID_CONSUMER_CONTROL, &empty_key, 2);
+
+				sleep_ms(50);
+			}
+			keyboard.update(current_mode);
+			
+		}
+		printf("\r\n");
+		return;
+	}
+
     // avoid sending multiple zero reports
     static bool send_empty = false;
 
@@ -501,8 +535,8 @@ int main()
 	printf("Ready! Entering main loop\r\n");
 	while (true) {
 		tud_task();				// tinyusb device task
-		rotary_task(&encoder);	// handle encoder rotation, NOT WORKING
-		
+		rotary_task(&encoder);	// handle encoder rotation
+
 		if (encoder.triggered && encoder.dir != 0) {
 			change_current_mode(encoder.dir);
 			continue;
