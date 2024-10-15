@@ -42,16 +42,16 @@ void draw_current_mode(void) {
 
 	if (current_mode == MODE_KEYPAD) {
 		oled_screen.setFont(pFontMega);
-		oled_screen.writeCharString(00, 16, (char *)"7");
-		oled_screen.writeCharString(18, 16, (char *)"8");
-		oled_screen.writeCharString(36, 16, (char *)"9");
-		oled_screen.writeCharString(54, 16, (char *)"0");
-		oled_screen.writeCharString(00, 31, (char *)"4");
-		oled_screen.writeCharString(18, 31, (char *)"5");
-		oled_screen.writeCharString(36, 31, (char *)"6");
-		oled_screen.writeCharString(00, 48, (char *)"1");
-		oled_screen.writeCharString(18, 48, (char *)"2");
-		oled_screen.writeCharString(36, 48, (char *)"3");
+		oled_screen.writeCharString(35, 16, (char *)"7");
+		oled_screen.writeCharString(55, 16, (char *)"8");
+		oled_screen.writeCharString(75, 16, (char *)"9");
+		oled_screen.writeCharString(95, 16, (char *)"0");
+		oled_screen.writeCharString(35, 31, (char *)"4");
+		oled_screen.writeCharString(55, 31, (char *)"5");
+		oled_screen.writeCharString(75, 31, (char *)"6");
+		oled_screen.writeCharString(35, 48, (char *)"1");
+		oled_screen.writeCharString(55, 48, (char *)"2");
+		oled_screen.writeCharString(75, 48, (char *)"3");
 		oled_screen.setFont(pFontDefault);
 	}
 
@@ -69,6 +69,17 @@ void draw_current_mode(void) {
 		oled_screen.writeCharString(03, 53, (char *)"Status");
 		oled_screen.writeCharString(50, 53, (char *)"Add .");
 		oled_screen.writeCharString(87, 53, (char *)"Commit");
+	}
+
+	if (current_mode == MODE_MULTIMEDIA) {
+
+		oled_screen.OLEDBitmap(0, 36, 16, 12, icon_mute, false, sizeof(icon_mute)/sizeof(uint8_t));
+		oled_screen.OLEDBitmap(60, 36, 16, 12, icon_volume, false, sizeof(icon_volume)/sizeof(uint8_t));
+
+		oled_screen.OLEDBitmap(0, 55, 16, 8, icon_prev, false, sizeof(icon_prev)/sizeof(uint8_t));
+		oled_screen.OLEDBitmap(55, 55, 16, 8, icon_play, false, sizeof(icon_play)/sizeof(uint8_t));
+		oled_screen.OLEDBitmap(65, 55, 16, 8, icon_pause, false, sizeof(icon_pause)/sizeof(uint8_t));
+		oled_screen.OLEDBitmap(118, 55, 16, 8, icon_next, false, sizeof(icon_next)/sizeof(uint8_t));
 	}
 
 	if (current_mode == MODE_DOCEKR) {
@@ -100,7 +111,7 @@ void draw_ui(void)
 
 	if (usb_mounted)
 	{
-		oled_screen.OLEDBitmap(109, 3, 16, 9, usb_icon, false, sizeof(usb_icon)/sizeof(uint8_t));
+		oled_screen.OLEDBitmap(109, 3, 16, 9, icon_usb, false, sizeof(icon_usb)/sizeof(uint8_t));
 	}
 
 	draw_current_mode();
@@ -541,6 +552,6 @@ void tud_resume_cb(void)
 {
 	oled_screen.OLEDEnable(1);
 	oled_screen.fillRect(100, 0, 27, 14, BLACK);
-	oled_screen.OLEDBitmap(109, 3, 16, 9, usb_icon, false, sizeof(usb_icon)/sizeof(uint8_t));
+	oled_screen.OLEDBitmap(109, 3, 16, 9, icon_usb, false, sizeof(icon_usb)/sizeof(uint8_t));
 	oled_screen.OLEDupdate();
 }
