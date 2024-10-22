@@ -99,6 +99,16 @@ void draw_current_mode(void) {
 		oled_screen.writeCharString(95, 53, (char *)"DCUD");
 	}
 
+	if (current_mode == MODE_OSU)
+	{
+		// Adicionar um ESC, e a tecla de reiniciar, CHAT
+		oled_screen.setFont(pFontGroTesk);
+		oled_screen.writeCharString(0, 24, (char *)"Z");
+		oled_screen.writeCharString(56, 24, (char *)"X");
+		oled_screen.writeCharString(112, 24, (char *)"Z");
+		oled_screen.setFont(pFontDefault);
+	}
+
 	oled_screen.OLEDupdate();
 }
 
@@ -488,33 +498,44 @@ void keys_task(void)
 
 void screensave_task(void)
 {
-	static uint32_t last_blip_ms = 0;
+	static uint32_t last_blip_on_ms = 0;
+	static uint32_t last_blip_off_ms = 0;
+	static bool is_blip_on = false;
 
 	if (is_in_screensaver_mode)
 	{
-		bool should_blip = board_millis() - last_blip_ms > BLIP_FREQUENCY_S*1000;
+		bool should_turn_on_blip = (board_millis() - last_blip_off_ms > BLIP_FREQUENCY_S * 1000) && !is_blip_on;
+		bool should_turn_off_blip = (board_millis() - last_blip_on_ms > BLIP_DURATION_MS) && is_blip_on;
 
-		if (should_blip)
+		if (should_turn_on_blip)
 		{
 			oled_screen.fillScreen(BLACK);
 			oled_screen.drawPixel(0, 63, WHITE);
 			oled_screen.OLEDEnable(1);
 			oled_screen.OLEDupdate();
-			sleep_ms(750);
+			last_blip_on_ms = board_millis();
+			is_blip_on = true;
+			return;
+		}
+
+		if (should_turn_off_blip)
+		{
 			oled_screen.OLEDEnable(0);
-			last_blip_ms = board_millis();
+			last_blip_off_ms = board_millis();
+			is_blip_on = false;
+			return;
 		}
 		return;
 	}
 
-	bool should_be_in_screensave = board_millis() - last_interaction_ms > SCREENSAVER_TIME_S*1000;
+	bool should_be_in_screensave = board_millis() - last_interaction_ms > SCREENSAVER_TIME_S * 1000;
 
 	if (should_be_in_screensave)
 	{
 		printf("Entering screensave mode\r\n");
 		is_in_screensaver_mode = true;
 		oled_screen.OLEDEnable(0);
-		last_blip_ms = board_millis();
+		last_blip_off_ms = board_millis();
 	}
 }
 

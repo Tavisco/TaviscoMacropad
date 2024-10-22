@@ -31,8 +31,9 @@
 #define MODE_OSU			5
 
 // Preferences - Screensaver
-#define SCREENSAVER_TIME_S	120
-#define BLIP_FREQUENCY_S	3
+#define SCREENSAVER_TIME_S	60*10
+#define BLIP_FREQUENCY_S	3	// blip every X seconds
+#define BLIP_DURATION_MS 	750	// blip stays on for X ms
 
 // Bitmaps
 const uint8_t icon_usb[] = {
