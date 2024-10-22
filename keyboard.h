@@ -17,6 +17,7 @@ struct PinKey
 	const uint8_t gpio_pin; // pico pin number
 	const uint8_t keypad_key; // HID_KEY_*
 	const uint8_t multimedia_key;
+	const uint8_t osu_key;
 };
 
 class KeyBoard
@@ -25,10 +26,10 @@ private:
 	// ===========================================================================
 	const static size_t num_pins = 10;
 	const PinKey pins[num_pins] = {
-		{GPIO_ENCODER_SW, HID_KEY_0, 0},
-		{GPIO_KEY_7, HID_KEY_7, 0}, {GPIO_KEY_8, HID_KEY_8, 0}, {GPIO_KEY_9, HID_KEY_9, 0},
-		{GPIO_KEY_4, HID_KEY_4, HID_USAGE_CONSUMER_MUTE}, {GPIO_KEY_5, HID_KEY_5, GPIO_KEY_5}, {GPIO_KEY_6, HID_KEY_6, 0},
-		{GPIO_KEY_1, HID_KEY_1, HID_USAGE_CONSUMER_SCAN_PREVIOUS}, {GPIO_KEY_2, HID_KEY_2, HID_USAGE_CONSUMER_PLAY_PAUSE}, {GPIO_KEY_3, HID_KEY_3, HID_USAGE_CONSUMER_SCAN_NEXT},
+		{GPIO_ENCODER_SW, HID_KEY_0, 0, 0},
+		{GPIO_KEY_7, HID_KEY_7, 0, HID_KEY_ESCAPE}, {GPIO_KEY_8, HID_KEY_8, 0, HID_KEY_F8}, {GPIO_KEY_9, HID_KEY_9, 0, HID_KEY_GRAVE},
+		{GPIO_KEY_4, HID_KEY_4, HID_USAGE_CONSUMER_MUTE, 0}, {GPIO_KEY_5, HID_KEY_5, GPIO_KEY_5, 0}, {GPIO_KEY_6, HID_KEY_6, 0, 0},
+		{GPIO_KEY_1, HID_KEY_1, HID_USAGE_CONSUMER_SCAN_PREVIOUS, HID_KEY_Z}, {GPIO_KEY_2, HID_KEY_2, HID_USAGE_CONSUMER_PLAY_PAUSE, HID_KEY_X}, {GPIO_KEY_3, HID_KEY_3, HID_USAGE_CONSUMER_SCAN_NEXT, HID_KEY_Z},
 	};
 	// ===========================================================================
 
@@ -41,6 +42,8 @@ private:
 			break;
 		case MODE_MULTIMEDIA:
 			return pin_key.multimedia_key;
+		case MODE_OSU:
+			return pin_key.osu_key;
 		
 		default:
 			return pin_key.gpio_pin;

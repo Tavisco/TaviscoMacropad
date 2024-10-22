@@ -101,11 +101,14 @@ void draw_current_mode(void) {
 
 	if (current_mode == MODE_OSU)
 	{
+		oled_screen.writeCharString(0, 17, (char *)"ESC");
+		oled_screen.OLEDBitmap(59, 17, 16, 8, icon_chat, false, sizeof(icon_chat)/sizeof(uint8_t));
+		oled_screen.OLEDBitmap(116, 17, 16, 8, icon_restart, false, sizeof(icon_restart)/sizeof(uint8_t));
 		// Adicionar um ESC, e a tecla de reiniciar, CHAT
 		oled_screen.setFont(pFontGroTesk);
-		oled_screen.writeCharString(0, 24, (char *)"Z");
-		oled_screen.writeCharString(56, 24, (char *)"X");
-		oled_screen.writeCharString(112, 24, (char *)"Z");
+		oled_screen.writeCharString(0, 32, (char *)"Z");
+		oled_screen.writeCharString(56, 32, (char *)"X");
+		oled_screen.writeCharString(112, 32, (char *)"Z");
 		oled_screen.setFont(pFontDefault);
 	}
 
@@ -435,6 +438,7 @@ void handle_hid_task(bool const keys_pressed) {
 	switch (current_mode)
 	{
 	case MODE_KEYPAD:
+	case MODE_OSU:
 		send_hid_report(keys_pressed);
 		break;
 	case MODE_MULTIMEDIA:
@@ -491,7 +495,8 @@ void keys_task(void)
 		update_last_interaction();
 	}
 
-	if (current_mode == MODE_KEYPAD || current_mode == MODE_GIT || current_mode == MODE_DOCEKR || current_mode == MODE_MULTIMEDIA){
+	if (current_mode == MODE_KEYPAD || current_mode == MODE_GIT || current_mode == MODE_DOCEKR || current_mode == MODE_MULTIMEDIA || current_mode == MODE_OSU)
+	{
 		handle_hid_task(keys_pressed);
 	}
 }
