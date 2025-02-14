@@ -10,8 +10,7 @@
 #include "keyboard.h"
 #include "rotary_encoder.h"
 
-const uint8_t mode_count = 6;
-const char *modes[]= {"Numpad", "Git", "Multimedia", "Docker", "IoT", "Osu!"};
+const char *modes[]= {"Numpad", "Git", "Multimedia", "Docker", "IoT", "Osu!", "Arrowpad"};
 
 uint8_t screen_buffer[OLED_SIZE]; // Define a buffer to cover whole screen  128 * 64/8
 SSD1306 oled_screen(OLED_WIDTH, OLED_HEIGHT);
@@ -110,6 +109,17 @@ void draw_current_mode(void) {
 		oled_screen.writeCharString(56, 32, (char *)"X");
 		oled_screen.writeCharString(112, 32, (char *)"Z");
 		oled_screen.setFont(pFontDefault);
+	}
+
+	if (current_mode == MODE_ARROWPAD)
+	{
+		draw_key_lines();
+		// 2nd row
+		oled_screen.writeCharString(58, 36, (char *)"Up");
+		// 3rd row
+		oled_screen.writeCharString(9, 53, (char *)"Left");
+		oled_screen.writeCharString(52, 53, (char *)"Down");
+		oled_screen.writeCharString(90, 53, (char *)"Right");
 	}
 
 	oled_screen.OLEDupdate();
@@ -439,6 +449,7 @@ void handle_hid_task(bool const keys_pressed) {
 	{
 	case MODE_KEYPAD:
 	case MODE_OSU:
+	case MODE_ARROWPAD:
 		send_hid_report(keys_pressed);
 		break;
 	case MODE_MULTIMEDIA:
@@ -463,12 +474,12 @@ void change_current_mode(int8_t direction)
 	update_last_interaction();
 
 	current_mode += direction;
-	if (current_mode == mode_count) {
+	if (current_mode == MODE_COUNT) {
 		current_mode = 0;
 	}
 
 	if (current_mode < 0) {
-		current_mode = mode_count - 1;
+		current_mode = MODE_COUNT - 1;
 	}
 
 	draw_current_mode();
@@ -495,10 +506,7 @@ void keys_task(void)
 		update_last_interaction();
 	}
 
-	if (current_mode == MODE_KEYPAD || current_mode == MODE_GIT || current_mode == MODE_DOCEKR || current_mode == MODE_MULTIMEDIA || current_mode == MODE_OSU)
-	{
-		handle_hid_task(keys_pressed);
-	}
+	handle_hid_task(keys_pressed);
 }
 
 void screensave_task(void)

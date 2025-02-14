@@ -9,7 +9,7 @@
 #define GPIO_OLED_SCLK		3
 
 // I2C	
-#define I2C_SPEED			800
+#define I2C_SPEED			1000
 #define i2C_ADDRESS			0x3C
 
 // Screen settings	
@@ -21,7 +21,7 @@
 #define POLL_INTERVAL		10
 
 // Modes	
-#define MODE_COUNT			5
+#define MODE_COUNT			7
 
 #define MODE_KEYPAD			0
 #define MODE_GIT			1
@@ -29,6 +29,7 @@
 #define MODE_DOCEKR			3
 #define MODE_IOT			4
 #define MODE_OSU			5
+#define MODE_ARROWPAD		6
 
 // Preferences - Screensaver
 #define SCREENSAVER_TIME_S	60*10
