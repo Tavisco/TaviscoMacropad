@@ -10,7 +10,7 @@
 #include "keyboard.h"
 #include "rotary_encoder.h"
 
-const char *modes[]= {"Numpad", "Git", "Multimedia", "Docker", "IoT", "Osu!", "Arrowpad"};
+const char *modes[]= {"Numpad", "Git", "Multimedia", "Docker", "IoT", "Osu!", "Arrowpad", "IDE"};
 
 uint8_t screen_buffer[OLED_SIZE]; // Define a buffer to cover whole screen  128 * 64/8
 SSD1306 oled_screen(OLED_WIDTH, OLED_HEIGHT);
@@ -23,21 +23,33 @@ bool usb_mounted = false;
 
 void keys_task(void);
 
-void draw_key_lines(void)
-{
-	// Vertical lines
-	oled_screen.drawLine(43, 16, 43, 64, WHITE);
-	oled_screen.drawLine(85, 16, 85, 64, WHITE);
-	// Horizontal lines
-	oled_screen.drawLine(0, 32, 128, 32, WHITE);
-	oled_screen.drawLine(0, 48, 128, 48, WHITE);
+void draw_key_lines(void) {
+    oled_screen.drawLine(43, 16, 43, 64, WHITE);
+    oled_screen.drawLine(85, 16, 85, 64, WHITE);
+    oled_screen.drawLine(0, 32, 128, 32, WHITE);
+    oled_screen.drawLine(0, 48, 128, 48, WHITE);
+}
+
+void draw_keypad(const char *keys[3][3]) {
+    int x_positions[3] = {0, 43, 85};
+    int y_positions[3] = {18, 37, 53};
+    // oled_screen.setFont(pFontMega);
+    for (int row = 0; row < 3; row++) {
+        for (int col = 0; col < 3; col++) {
+            if (keys[row][col]) {
+                int text_width = strlen(keys[row][col]) * 6; // Fixed 6x8 font
+                int x = x_positions[col] + (43 - text_width) / 2;
+                oled_screen.writeCharString(x, y_positions[row], (char *)keys[row][col]);
+            }
+        }
+    }
+    // oled_screen.setFont(pFontDefault);
 }
 
 void draw_current_mode(void) {
-	oled_screen.fillRect(0, 0, 64, 14, BLACK);
-	oled_screen.writeCharString(0, 3, (char *)modes[current_mode]);
-	
-	oled_screen.fillRect(0, 16, 128, 48, BLACK);
+    oled_screen.fillRect(0, 0, 64, 14, BLACK);
+    oled_screen.writeCharString(0, 3, (char *)modes[current_mode]);
+    oled_screen.fillRect(0, 16, 128, 48, BLACK);
 
 	if (current_mode == MODE_KEYPAD) {
 		oled_screen.setFont(pFontMega);
@@ -54,22 +66,6 @@ void draw_current_mode(void) {
 		oled_screen.setFont(pFontDefault);
 	}
 
-	if (current_mode == MODE_GIT) {
-		draw_key_lines();
-		// 1st row
-		//oled_screen.writeCharString(07, 20, (char *)"Enter");
-		oled_screen.writeCharString(49, 20, (char *)"Stash");
-		oled_screen.writeCharString(87, 20, (char *)"St pop");
-		// 2nd row
-		oled_screen.writeCharString(10, 36, (char *)"Diff");
-		oled_screen.writeCharString(53, 36, (char *)"Pull");
-		oled_screen.writeCharString(95, 36, (char *)"Push");
-		// 3rd row
-		oled_screen.writeCharString(03, 53, (char *)"Status");
-		oled_screen.writeCharString(50, 53, (char *)"Add .");
-		oled_screen.writeCharString(87, 53, (char *)"Commit");
-	}
-
 	if (current_mode == MODE_MULTIMEDIA) {
 
 		oled_screen.OLEDBitmap(0, 36, 16, 12, icon_mute, false, sizeof(icon_mute)/sizeof(uint8_t));
@@ -79,23 +75,6 @@ void draw_current_mode(void) {
 		oled_screen.OLEDBitmap(55, 55, 16, 8, icon_play, false, sizeof(icon_play)/sizeof(uint8_t));
 		oled_screen.OLEDBitmap(65, 55, 16, 8, icon_pause, false, sizeof(icon_pause)/sizeof(uint8_t));
 		oled_screen.OLEDBitmap(118, 55, 16, 8, icon_next, false, sizeof(icon_next)/sizeof(uint8_t));
-	}
-
-	if (current_mode == MODE_DOCEKR) {
-		draw_key_lines();
-
-		// 1st row
-		oled_screen.writeCharString(00, 20, (char *)"Torchic");
-		oled_screen.writeCharString(55, 20, (char *)"DCU");
-		oled_screen.writeCharString(86, 20, (char *)"Treecko");
-		// 2nd row
-		oled_screen.writeCharString(15, 36, (char *)"PS");
-		oled_screen.writeCharString(53, 36, (char *)"NVIM");
-		oled_screen.writeCharString(100, 36, (char *)"DCL");
-		// 3rd row
-		oled_screen.writeCharString(12, 53, (char *)"DCD");
-		oled_screen.writeCharString(55, 53, (char *)"DCP");
-		oled_screen.writeCharString(95, 53, (char *)"DCUD");
 	}
 
 	if (current_mode == MODE_OSU)
@@ -111,18 +90,38 @@ void draw_current_mode(void) {
 		oled_screen.setFont(pFontDefault);
 	}
 
-	if (current_mode == MODE_ARROWPAD)
-	{
-		draw_key_lines();
-		// 2nd row
-		oled_screen.writeCharString(58, 36, (char *)"Up");
-		// 3rd row
-		oled_screen.writeCharString(9, 53, (char *)"Left");
-		oled_screen.writeCharString(52, 53, (char *)"Down");
-		oled_screen.writeCharString(90, 53, (char *)"Right");
-	}
+    if (current_mode == MODE_GIT) {
+        draw_key_lines();
+        const char *keys[3][3] = {
+            {nullptr, "Stash", "St pop"},
+            {"Diff", "Pull", "Push"},
+            {"Status", "Add .", "Commit"}
+        };
+        draw_keypad(keys);
+    }
 
-	oled_screen.OLEDupdate();
+    if (current_mode == MODE_DOCEKR) {
+        draw_key_lines();
+        const char *keys[3][3] = {
+            {"Torchic", "DCU", "Treecko"},
+            {"PS", "NVIM", "DCL"},
+            {"DCD", "DCP", "DCUD"}
+        };
+        draw_keypad(keys);
+    }
+
+    if (current_mode == MODE_ARROWPAD) {
+        draw_key_lines();
+        const char *keys[3][3] = {
+            {nullptr, nullptr, nullptr},
+            {nullptr, "Up", nullptr},
+            {"Left", "Down", "Right"}
+        };
+        draw_keypad(keys);
+    }
+
+    
+    oled_screen.OLEDupdate();
 }
 
 void draw_ui(void)

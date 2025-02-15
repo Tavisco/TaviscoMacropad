@@ -21,7 +21,7 @@
 #define POLL_INTERVAL		10
 
 // Modes	
-#define MODE_COUNT			7
+#define MODE_COUNT			8
 
 #define MODE_KEYPAD			0
 #define MODE_GIT			1
@@ -30,6 +30,7 @@
 #define MODE_IOT			4
 #define MODE_OSU			5
 #define MODE_ARROWPAD		6
+#define MODE_IDE			7
 
 // Preferences - Screensaver
 #define SCREENSAVER_TIME_S	60*10
