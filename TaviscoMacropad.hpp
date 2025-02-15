@@ -9,8 +9,10 @@
 #define GPIO_OLED_SCLK		3
 
 // I2C	
-#define I2C_SPEED			1000
-#define i2C_ADDRESS			0x3C
+#define I2C_SPEED				1000
+#define i2C_ADDRESS				0x3C
+#define OLED_CONTRAST_DIM 		1
+#define OLED_CONTRAST_BRIGHT	255
 
 // Screen settings	
 #define OLED_WIDTH			128

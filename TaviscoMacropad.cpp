@@ -19,6 +19,7 @@ KeyBoard keyboard;
 rotary_encoder_t encoder;
 uint32_t last_interaction_ms = 0;
 bool is_in_screensaver_mode = false;
+bool is_in_low_brightness_mode = false;
 bool usb_mounted = false;
 
 void keys_task(void);
@@ -31,9 +32,11 @@ void draw_key_lines(void) {
 }
 
 void draw_keypad(const char *keys[3][3]) {
+	draw_key_lines();
+
     int x_positions[3] = {0, 43, 85};
     int y_positions[3] = {20, 37, 53};
-    // oled_screen.setFont(pFontMega);
+
     for (int row = 0; row < 3; row++) {
         for (int col = 0; col < 3; col++) {
             if (keys[row][col]) {
@@ -43,15 +46,10 @@ void draw_keypad(const char *keys[3][3]) {
             }
         }
     }
-    // oled_screen.setFont(pFontDefault);
 }
 
-void draw_current_mode(void) {
-    oled_screen.fillRect(0, 0, 64, 14, BLACK);
-    oled_screen.writeCharString(0, 3, (char *)modes[current_mode]);
-    oled_screen.fillRect(0, 16, 128, 48, BLACK);
-
-	if (current_mode == MODE_NUMPAD) {
+void draw_custom_numpad(void)
+{
 		oled_screen.setFont(pFontMega);
 		oled_screen.writeCharString(35, 16, (char *)"7");
 		oled_screen.writeCharString(55, 16, (char *)"8");
@@ -64,10 +62,10 @@ void draw_current_mode(void) {
 		oled_screen.writeCharString(55, 48, (char *)"2");
 		oled_screen.writeCharString(75, 48, (char *)"3");
 		oled_screen.setFont(pFontDefault);
-	}
+}
 
-	if (current_mode == MODE_MULTIMEDIA) {
-
+void draw_custom_multimedia(void)
+{
 		oled_screen.OLEDBitmap(0, 36, 16, 12, icon_mute, false, sizeof(icon_mute)/sizeof(uint8_t));
 		oled_screen.OLEDBitmap(60, 36, 16, 12, icon_volume, false, sizeof(icon_volume)/sizeof(uint8_t));
 
@@ -75,10 +73,10 @@ void draw_current_mode(void) {
 		oled_screen.OLEDBitmap(55, 55, 16, 8, icon_play, false, sizeof(icon_play)/sizeof(uint8_t));
 		oled_screen.OLEDBitmap(65, 55, 16, 8, icon_pause, false, sizeof(icon_pause)/sizeof(uint8_t));
 		oled_screen.OLEDBitmap(118, 55, 16, 8, icon_next, false, sizeof(icon_next)/sizeof(uint8_t));
-	}
+}
 
-	if (current_mode == MODE_OSU)
-	{
+void draw_custom_osu(void)
+{
 		oled_screen.writeCharString(0, 17, (char *)"ESC");
 		oled_screen.OLEDBitmap(59, 17, 16, 8, icon_chat, false, sizeof(icon_chat)/sizeof(uint8_t));
 		oled_screen.OLEDBitmap(116, 17, 16, 8, icon_restart, false, sizeof(icon_restart)/sizeof(uint8_t));
@@ -88,10 +86,27 @@ void draw_current_mode(void) {
 		oled_screen.writeCharString(56, 32, (char *)"X");
 		oled_screen.writeCharString(112, 32, (char *)"Z");
 		oled_screen.setFont(pFontDefault);
+}
+
+void draw_current_mode(void) {
+    oled_screen.fillRect(0, 0, 64, 14, BLACK);
+    oled_screen.writeCharString(0, 3, (char *)modes[current_mode]);
+    oled_screen.fillRect(0, 16, 128, 48, BLACK);
+
+	if (current_mode == MODE_NUMPAD) {
+		draw_custom_numpad();
+	}
+
+	if (current_mode == MODE_MULTIMEDIA) {
+		draw_custom_multimedia();
+	}
+
+	if (current_mode == MODE_OSU)
+	{
+		draw_custom_osu();
 	}
 
     if (current_mode == MODE_GIT) {
-        draw_key_lines();
         const char *keys[3][3] = {
             {nullptr,	"Stash",	"St pop"},
             {"Diff",	"Pull", 	"Push"},
@@ -101,7 +116,6 @@ void draw_current_mode(void) {
     }
 
     if (current_mode == MODE_DOCEKR) {
-        draw_key_lines();
         const char *keys[3][3] = {
             {"Torchic",	"DCU",	"Treecko"},
             {"PS",		"NVIM",	"DCL"},
@@ -111,7 +125,6 @@ void draw_current_mode(void) {
     }
 
     if (current_mode == MODE_ARROWPAD) {
-        draw_key_lines();
         const char *keys[3][3] = {
             {"Esc",		"Up",		nullptr},
             {"Left",	"Down", 	"Right"},
@@ -121,7 +134,6 @@ void draw_current_mode(void) {
     }
 
 	if (current_mode == MODE_WASD) {
-        draw_key_lines();
         const char *keys[3][3] = {
             {"Esc",		"W",		nullptr},
             {"A",		"S", 		"D"},
@@ -130,10 +142,7 @@ void draw_current_mode(void) {
         draw_keypad(keys);
     }
 
-	// TODO: WASD mode
-
 	if (current_mode == MODE_IDE) {
-        draw_key_lines();
         const char *keys[3][3] = {
             {"Sidebar",	"Comment",	"Impl"},
             {"Termnl",	"Run",		"MovUp"},
@@ -143,7 +152,6 @@ void draw_current_mode(void) {
     }
 
 		if (current_mode == MODE_IDE_2) {
-        draw_key_lines();
         const char *keys[3][3] = {
             {nullptr,	nullptr,	"Refs"},
             {nullptr,	nullptr,	"SpMov R"},
@@ -174,11 +182,18 @@ void update_last_interaction(void)
 {
 	last_interaction_ms = board_millis();
 
+	if (is_in_low_brightness_mode) {
+		oled_screen.OLEDContrast(OLED_CONTRAST_BRIGHT);
+		is_in_low_brightness_mode = false;
+	}
+
 	if (is_in_screensaver_mode) {
 		printf("Exiting from screensave mode!\r\n");
 		oled_screen.OLEDEnable(1);
+		oled_screen.OLEDContrast(OLED_CONTRAST_BRIGHT);
 		draw_ui();
 		is_in_screensaver_mode = false;
+		is_in_low_brightness_mode = false;
 	}
 }
 
@@ -582,8 +597,14 @@ void screensave_task(void)
 	}
 
 	bool should_be_in_screensave = board_millis() - last_interaction_ms > SCREENSAVER_TIME_S * 1000;
+	bool should_be_in_min_brightness = board_millis() - last_interaction_ms > (SCREENSAVER_TIME_S / 2) * 1000;
 
-	// TODO: But brightness to minimum at half SCREENSAVER_TIME_S
+	if (should_be_in_min_brightness && !is_in_low_brightness_mode && !should_be_in_screensave)
+	{
+		printf("Entering low brightness mode\r\n");
+		oled_screen.OLEDContrast(OLED_CONTRAST_DIM);
+		is_in_low_brightness_mode = true;
+	}
 
 	if (should_be_in_screensave)
 	{
