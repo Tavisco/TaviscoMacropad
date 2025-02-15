@@ -114,9 +114,9 @@ void draw_current_mode(void) {
         draw_key_lines();
 		// TODO: Move empty line to bottom
         const char *keys[3][3] = {
-            {nullptr,	nullptr,	nullptr},
-            {nullptr,	"Up",		nullptr},
-            {"Left",	"Down", 	"Right"}
+            {"Esc",		"Up",		nullptr},
+            {"Left",	"Down", 	"Right"},
+            {"L CTRL",	nullptr,	"Space"}
         };
         draw_keypad(keys);
     }
