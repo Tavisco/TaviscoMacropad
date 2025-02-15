@@ -53,12 +53,19 @@ public:
 private:
     uint8_t get_key_for_mode(uint8_t mode, uint8_t index) {
         switch (mode) {
-            case MODE_NUMPAD: return keypad_keys[index];
-            case MODE_MULTIMEDIA: return multimedia_keys[index];
-            case MODE_OSU: return osu_keys[index];
-			case MODE_ARROWPAD: return arrowpad_keys[index];
-            case MODE_IDE: return ide_keys[index];
-            default: return gpio_pins[index];
+            case MODE_NUMPAD: 
+                return keypad_keys[index];
+            case MODE_MULTIMEDIA: 
+                return multimedia_keys[index];
+            case MODE_OSU:
+                return osu_keys[index];
+			case MODE_ARROWPAD:
+                return arrowpad_keys[index];
+            case MODE_IDE:
+            case MODE_IDE_2:
+                return ide_keys[index];
+            default:
+                return gpio_pins[index];
         }
     }
 };

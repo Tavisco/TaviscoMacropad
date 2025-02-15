@@ -10,7 +10,7 @@
 #include "keyboard.h"
 #include "rotary_encoder.h"
 
-const char *modes[]= {"IDE", "Git", "Docker", "Numpad", "IoT", "Osu!", "Arrowpad", "Multimedia"};
+const char *modes[]= {"IDE (1/2)", "Git", "Docker", "Numpad", "IoT", "Osu!", "Arrowpad", "Multimedia", "IDE (2/2)"};
 
 uint8_t screen_buffer[OLED_SIZE]; // Define a buffer to cover whole screen  128 * 64/8
 SSD1306 oled_screen(OLED_WIDTH, OLED_HEIGHT);
@@ -93,9 +93,9 @@ void draw_current_mode(void) {
     if (current_mode == MODE_GIT) {
         draw_key_lines();
         const char *keys[3][3] = {
-            {nullptr, "Stash", "St pop"},
-            {"Diff", "Pull", "Push"},
-            {"Status", "Add .", "Commit"}
+            {nullptr,	"Stash",	"St pop"},
+            {"Diff",	"Pull", 	"Push"},
+            {"Status",	"Add .",	"Commit"}
         };
         draw_keypad(keys);
     }
@@ -103,34 +103,46 @@ void draw_current_mode(void) {
     if (current_mode == MODE_DOCEKR) {
         draw_key_lines();
         const char *keys[3][3] = {
-            {"Torchic", "DCU", "Treecko"},
-            {"PS", "NVIM", "DCL"},
-            {"DCD", "DCP", "DCUD"}
+            {"Torchic",	"DCU",	"Treecko"},
+            {"PS",		"NVIM",	"DCL"},
+            {"DCD",		"DCP",	"DCUD"}
         };
         draw_keypad(keys);
     }
 
     if (current_mode == MODE_ARROWPAD) {
         draw_key_lines();
+		// TODO: Move empty line to bottom
         const char *keys[3][3] = {
-            {nullptr, nullptr, nullptr},
-            {nullptr, "Up", nullptr},
-            {"Left", "Down", "Right"}
+            {nullptr,	nullptr,	nullptr},
+            {nullptr,	"Up",		nullptr},
+            {"Left",	"Down", 	"Right"}
         };
         draw_keypad(keys);
     }
+
+	// TODO: WASD mode
 
 	if (current_mode == MODE_IDE) {
         draw_key_lines();
         const char *keys[3][3] = {
-            {"Sidebar", "Comment", "Impl"},
-            {"Termnl", "Run", "MovUp"},
-            {"DeLine", "Compile","MovDown"}
+            {"Sidebar",	"Comment",	"Impl"},
+            {"Termnl",	"Run",		"MovUp"},
+            {"DeLine",	"Compile",	"MovDown"}
         };
         draw_keypad(keys);
     }
 
-    
+		if (current_mode == MODE_IDE_2) {
+        draw_key_lines();
+        const char *keys[3][3] = {
+            {nullptr,	nullptr,	"Refs"},
+            {nullptr,	nullptr,	"SpMov R"},
+            {nullptr,	"Rename",	"Splt R"}
+        };
+        draw_keypad(keys);
+    }
+
     oled_screen.OLEDupdate();
 }
 
@@ -356,7 +368,7 @@ void send_docker_command(bool keys_pressed)
 	}
 }
 
-static void send_hid_report(bool keys_pressed)
+static void send_hid_report(bool keys_pressed, uint8_t modifier)
 {
     // skip if hid is not ready yet
     if (!tud_hid_ready())
@@ -369,7 +381,7 @@ static void send_hid_report(bool keys_pressed)
 
     if (keys_pressed)
     {
-        tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, keyboard.keys_pressed);
+        tud_hid_keyboard_report(REPORT_ID_KEYBOARD, modifier, keyboard.keys_pressed);
         send_empty = true;
 		return;
     }
@@ -380,6 +392,11 @@ static void send_hid_report(bool keys_pressed)
 		tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
 	}
 	send_empty = false;
+}
+
+static void send_hid_report(bool keys_pressed)
+{
+	return send_hid_report(keys_pressed, 0);
 }
 
 static void send_consumer_hid_report(bool keys_pressed)
@@ -461,6 +478,9 @@ void handle_hid_task(bool const keys_pressed) {
 	case MODE_ARROWPAD:
 	case MODE_IDE:
 		send_hid_report(keys_pressed);
+		break;
+	case MODE_IDE_2:
+		send_hid_report(keys_pressed, KEYBOARD_MODIFIER_LEFTSHIFT);
 		break;
 	case MODE_MULTIMEDIA:
 		send_consumer_hid_report(keys_pressed);
@@ -552,6 +572,8 @@ void screensave_task(void)
 	}
 
 	bool should_be_in_screensave = board_millis() - last_interaction_ms > SCREENSAVER_TIME_S * 1000;
+
+	// TODO: But brightness to minimum at half SCREENSAVER_TIME_S
 
 	if (should_be_in_screensave)
 	{
