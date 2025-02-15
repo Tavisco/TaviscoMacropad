@@ -21,6 +21,7 @@ const uint8_t keypad_keys[NUM_KEYS] = {HID_KEY_0, HID_KEY_7, HID_KEY_8, HID_KEY_
 const uint8_t multimedia_keys[NUM_KEYS] = {0, 0, 0, 0, HID_USAGE_CONSUMER_MUTE, HID_KEY_5, 0, HID_USAGE_CONSUMER_SCAN_PREVIOUS, HID_USAGE_CONSUMER_PLAY_PAUSE, HID_USAGE_CONSUMER_SCAN_NEXT};
 const uint8_t osu_keys[NUM_KEYS] = {0, HID_KEY_ESCAPE, HID_KEY_F8, HID_KEY_GRAVE, 0, 0, 0, HID_KEY_Z, HID_KEY_X, HID_KEY_Z};
 const uint8_t arrowpad_keys[NUM_KEYS] = {0, HID_KEY_ESCAPE, HID_KEY_ARROW_UP, 0, HID_KEY_ARROW_LEFT, HID_KEY_ARROW_DOWN, HID_KEY_ARROW_RIGHT, HID_KEY_CONTROL_LEFT, 0, HID_KEY_SPACE};
+const uint8_t wasd_keys[NUM_KEYS] = {0, HID_KEY_ESCAPE, HID_KEY_W, 0, HID_KEY_A, HID_KEY_S, HID_KEY_D, HID_KEY_CONTROL_LEFT, 0, HID_KEY_SPACE};
 const uint8_t ide_keys[NUM_KEYS] = {0, HID_KEY_F13, HID_KEY_F14, HID_KEY_F15, HID_KEY_F16, HID_KEY_F17, HID_KEY_F18, HID_KEY_F19, HID_KEY_F20, HID_KEY_F21};
 
 class KeyBoard {
@@ -61,6 +62,8 @@ private:
                 return osu_keys[index];
 			case MODE_ARROWPAD:
                 return arrowpad_keys[index];
+            case MODE_WASD:
+                return wasd_keys[index];
             case MODE_IDE:
             case MODE_IDE_2:
                 return ide_keys[index];

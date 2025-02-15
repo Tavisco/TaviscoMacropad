@@ -10,7 +10,7 @@
 #include "keyboard.h"
 #include "rotary_encoder.h"
 
-const char *modes[]= {"IDE (1/2)", "Git", "Docker", "Numpad", "IoT", "Osu!", "Arrowpad", "Multimedia", "IDE (2/2)"};
+const char *modes[]= {"IDE (1/2)", "Git", "Docker", "Numpad", "IoT", "Osu!", "Arrowpad", "WASD", "Multimedia", "IDE (2/2)"};
 
 uint8_t screen_buffer[OLED_SIZE]; // Define a buffer to cover whole screen  128 * 64/8
 SSD1306 oled_screen(OLED_WIDTH, OLED_HEIGHT);
@@ -112,10 +112,19 @@ void draw_current_mode(void) {
 
     if (current_mode == MODE_ARROWPAD) {
         draw_key_lines();
-		// TODO: Move empty line to bottom
         const char *keys[3][3] = {
             {"Esc",		"Up",		nullptr},
             {"Left",	"Down", 	"Right"},
+            {"L CTRL",	nullptr,	"Space"}
+        };
+        draw_keypad(keys);
+    }
+
+	if (current_mode == MODE_WASD) {
+        draw_key_lines();
+        const char *keys[3][3] = {
+            {"Esc",		"W",		nullptr},
+            {"A",		"S", 		"D"},
             {"L CTRL",	nullptr,	"Space"}
         };
         draw_keypad(keys);
@@ -476,6 +485,7 @@ void handle_hid_task(bool const keys_pressed) {
 	case MODE_NUMPAD:
 	case MODE_OSU:
 	case MODE_ARROWPAD:
+	case MODE_WASD:
 	case MODE_IDE:
 		send_hid_report(keys_pressed);
 		break;
