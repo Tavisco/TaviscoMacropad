@@ -21,6 +21,7 @@ const uint8_t keypad_keys[NUM_KEYS] = {HID_KEY_0, HID_KEY_7, HID_KEY_8, HID_KEY_
 const uint8_t multimedia_keys[NUM_KEYS] = {0, 0, 0, 0, HID_USAGE_CONSUMER_MUTE, HID_KEY_5, 0, HID_USAGE_CONSUMER_SCAN_PREVIOUS, HID_USAGE_CONSUMER_PLAY_PAUSE, HID_USAGE_CONSUMER_SCAN_NEXT};
 const uint8_t osu_keys[NUM_KEYS] = {0, HID_KEY_ESCAPE, HID_KEY_F8, HID_KEY_GRAVE, 0, 0, 0, HID_KEY_Z, HID_KEY_X, HID_KEY_Z};
 const uint8_t arrowpad_keys[NUM_KEYS] = {0, 0, 0, 0, 0, HID_KEY_ARROW_UP, 0, HID_KEY_ARROW_LEFT, HID_KEY_ARROW_DOWN, HID_KEY_ARROW_RIGHT};
+const uint8_t ide_keys[NUM_KEYS] = {0, HID_KEY_F13, HID_KEY_F14, HID_KEY_F15, HID_KEY_F16, HID_KEY_F17, HID_KEY_F18, HID_KEY_F19, HID_KEY_F20, HID_KEY_F21};
 
 class KeyBoard {
 public:
@@ -52,10 +53,11 @@ public:
 private:
     uint8_t get_key_for_mode(uint8_t mode, uint8_t index) {
         switch (mode) {
-            case MODE_KEYPAD: return keypad_keys[index];
+            case MODE_NUMPAD: return keypad_keys[index];
             case MODE_MULTIMEDIA: return multimedia_keys[index];
             case MODE_OSU: return osu_keys[index];
 			case MODE_ARROWPAD: return arrowpad_keys[index];
+            case MODE_IDE: return ide_keys[index];
             default: return gpio_pins[index];
         }
     }

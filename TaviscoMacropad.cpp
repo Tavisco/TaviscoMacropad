@@ -10,7 +10,7 @@
 #include "keyboard.h"
 #include "rotary_encoder.h"
 
-const char *modes[]= {"Numpad", "Git", "Multimedia", "Docker", "IoT", "Osu!", "Arrowpad", "IDE"};
+const char *modes[]= {"IDE", "Git", "Docker", "Numpad", "IoT", "Osu!", "Arrowpad", "Multimedia"};
 
 uint8_t screen_buffer[OLED_SIZE]; // Define a buffer to cover whole screen  128 * 64/8
 SSD1306 oled_screen(OLED_WIDTH, OLED_HEIGHT);
@@ -32,7 +32,7 @@ void draw_key_lines(void) {
 
 void draw_keypad(const char *keys[3][3]) {
     int x_positions[3] = {0, 43, 85};
-    int y_positions[3] = {18, 37, 53};
+    int y_positions[3] = {20, 37, 53};
     // oled_screen.setFont(pFontMega);
     for (int row = 0; row < 3; row++) {
         for (int col = 0; col < 3; col++) {
@@ -51,7 +51,7 @@ void draw_current_mode(void) {
     oled_screen.writeCharString(0, 3, (char *)modes[current_mode]);
     oled_screen.fillRect(0, 16, 128, 48, BLACK);
 
-	if (current_mode == MODE_KEYPAD) {
+	if (current_mode == MODE_NUMPAD) {
 		oled_screen.setFont(pFontMega);
 		oled_screen.writeCharString(35, 16, (char *)"7");
 		oled_screen.writeCharString(55, 16, (char *)"8");
@@ -116,6 +116,16 @@ void draw_current_mode(void) {
             {nullptr, nullptr, nullptr},
             {nullptr, "Up", nullptr},
             {"Left", "Down", "Right"}
+        };
+        draw_keypad(keys);
+    }
+
+	if (current_mode == MODE_IDE) {
+        draw_key_lines();
+        const char *keys[3][3] = {
+            {"Sidebar", "Comment", "Impl"},
+            {"Termnl", "Run", "MovUp"},
+            {"DeLine", "Compile","MovDown"}
         };
         draw_keypad(keys);
     }
@@ -446,9 +456,10 @@ void handle_hid_task(bool const keys_pressed) {
 
 	switch (current_mode)
 	{
-	case MODE_KEYPAD:
+	case MODE_NUMPAD:
 	case MODE_OSU:
 	case MODE_ARROWPAD:
+	case MODE_IDE:
 		send_hid_report(keys_pressed);
 		break;
 	case MODE_MULTIMEDIA:
