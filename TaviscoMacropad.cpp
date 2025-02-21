@@ -652,6 +652,7 @@ void mouse_wiggler_task(void)
 		mouse_wiggler_enabled = !mouse_wiggler_enabled;
 		sleep_ms(150);
 		draw_ui();
+		update_last_interaction();
 	}
 
 	if (!mouse_wiggler_enabled)
