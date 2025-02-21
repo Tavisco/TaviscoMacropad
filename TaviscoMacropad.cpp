@@ -10,7 +10,7 @@
 #include "keyboard.h"
 #include "rotary_encoder.h"
 
-const char *modes[]= {"IDE (1/2)", "Git", "Docker", "Numpad", "IoT", "Osu!", "Arrowpad", "WASD", "Multimedia", "IDE (2/2)"};
+const char *modes[]= {"IDE (1/2)", "Git", "Docker", "Numpad", "IoT", "Osu!", "Arrowpad", "WASD", "Multimedia", "Wiggler", "IDE (2/2)"};
 
 uint8_t screen_buffer[OLED_SIZE]; // Define a buffer to cover whole screen  128 * 64/8
 SSD1306 oled_screen(OLED_WIDTH, OLED_HEIGHT);
@@ -21,6 +21,7 @@ uint32_t last_interaction_ms = 0;
 bool is_in_screensaver_mode = false;
 bool is_in_low_brightness_mode = false;
 bool usb_mounted = false;
+bool mouse_wiggler_enabled = false;
 
 void keys_task(void);
 
@@ -88,7 +89,21 @@ void draw_custom_osu(void)
 		oled_screen.setFont(pFontDefault);
 }
 
-void draw_current_mode(void) {
+void draw_custom_mouse_wiggler(void)
+{
+	oled_screen.setFont(pFontGroTesk);
+	if (mouse_wiggler_enabled) {
+		oled_screen.writeCharString(48, 17, (char *)"ON");
+	} else {
+		oled_screen.writeCharString(40, 17, (char *)"OFF");
+	}
+	oled_screen.setFont(pFontDefault);
+
+	oled_screen.writeCharString(10, 56, (char *)"Any key to toggle");
+}
+
+void draw_current_mode(void) 
+{
     oled_screen.fillRect(0, 0, 64, 14, BLACK);
     oled_screen.writeCharString(0, 3, (char *)modes[current_mode]);
     oled_screen.fillRect(0, 16, 128, 48, BLACK);
@@ -104,6 +119,11 @@ void draw_current_mode(void) {
 	if (current_mode == MODE_OSU)
 	{
 		draw_custom_osu();
+	}
+
+	if (current_mode == MODE_MOUSE_WIGGLER)
+	{
+		draw_custom_mouse_wiggler();
 	}
 
     if (current_mode == MODE_GIT) {
@@ -151,7 +171,7 @@ void draw_current_mode(void) {
         draw_keypad(keys);
     }
 
-		if (current_mode == MODE_IDE_2) {
+	if (current_mode == MODE_IDE_2) {
         const char *keys[3][3] = {
             {nullptr,	nullptr,	"Refs"},
             {nullptr,	nullptr,	"SpMov R"},
@@ -520,6 +540,11 @@ void handle_hid_task(bool const keys_pressed) {
 	}
 }
 
+void reset_variables(void)
+{
+	mouse_wiggler_enabled = false;
+}
+
 void change_current_mode(int8_t direction)
 {
 	if (direction == 0) {
@@ -537,6 +562,7 @@ void change_current_mode(int8_t direction)
 		current_mode = MODE_COUNT - 1;
 	}
 
+	reset_variables();
 	draw_current_mode();
 	printf("Changed mode to [%s], count[%i], direction: [%i]\r\n", modes[current_mode], current_mode, direction);
 	sleep_ms(150);
@@ -615,6 +641,49 @@ void screensave_task(void)
 	}
 }
 
+void mouse_wiggler_task(void)
+{
+	if (current_mode != MODE_MOUSE_WIGGLER)
+		return;
+
+	bool const keys_pressed = keyboard.update(current_mode);
+	if (keys_pressed)
+	{
+		mouse_wiggler_enabled = !mouse_wiggler_enabled;
+		sleep_ms(150);
+		draw_ui();
+	}
+
+	if (!mouse_wiggler_enabled)
+		return;
+
+	// skip if hid is not ready yet
+	if (!tud_hid_ready())
+	{
+		return;
+	}
+
+	static int16_t current_x = 0;
+	static int8_t delta_x = 1;
+	static bool x_is_forward = true;
+	static int8_t delta_y = 0;
+
+	if (current_x == 256 && x_is_forward)
+	{
+		delta_x = -1;
+		x_is_forward = false;
+	}
+
+	if (current_x == 0 && !x_is_forward)
+	{
+		delta_x = 1;
+		x_is_forward = true;
+	}
+
+	current_x += delta_x;
+	tud_hid_mouse_report(REPORT_ID_MOUSE, 0x00, delta_x, delta_y, 0, 0);
+}
+
 int main()
 {
 	stdio_uart_init_full(uart0, 115200, 12, 13);
@@ -641,6 +710,7 @@ int main()
 
 		keys_task();			// handle key presses
 		screensave_task();
+		mouse_wiggler_task();
 	}
 }
 
